@@ -292,3 +292,5 @@ p_alc    <- plot_binary("hvy_alcohol_consump")
 ```
 
 Across all binary health indicators, individuals with various health risk factors consistently show higher rates of diabetes. Diabetes prevalence is substantially higher among those with **high blood pressure**, **high cholesterol**, a history of **stroke**, or **heart disease/heart attack**, highlighting their strong clinical connection to diabetes. Smoking shows only a slight increase in diabetes prevalence, while dietary indicators (fruit and vegetable consumption) display small differences between groups. Heavy alcohol consumption appears weakly related as well. Overall, the indicators most strongly associated with diabetes are cardiovascular-related conditions, which will likely play an important role in the predictive modeling stage.
+
+\[Click here for the Modeling Page\](Modeling.html)
