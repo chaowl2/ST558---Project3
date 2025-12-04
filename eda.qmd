@@ -30,7 +30,7 @@ clean_names()
 colSums(is.na(data))
 ```
 
-### Convert some variables to factors and give meaningful labels 
+### Convert some variables to factors and give meaningful labels
 
 ```{r}
 data <- data |>
@@ -172,7 +172,7 @@ data %>%
   )
 ```
 
-Diabetes becomes increasingly common as general health worsens. Individuals reporting \"Fair\" or \"Poor\" health show a much higher proportion of diabetes compared to those in excellent or very good health, suggesting that overall health status is strongly related to diabetes risk.
+Diabetes becomes increasingly common as general health worsens. Individuals reporting "Fair" or "Poor" health show a much higher proportion of diabetes compared to those in excellent or very good health, suggesting that overall health status is strongly related to diabetes risk.
 
 ### Physical Activity vs Diabetes
 
@@ -260,7 +260,7 @@ data %>%
 
 Several key health risk factors are common in the dataset: about **43%** of respondents report high blood pressure and **42%** report high cholesterol, both of which are strongly linked to diabetes and are likely to be important predictors. Nearly **96%** of individuals have had their cholesterol checked, indicating widespread screening. Smoking is also prevalent at **44%**, which may contribute modestly to diabetes risk.
 
-Stroke (**4%**) and heart disease or heart attack (**9%**)---are less common but show strong clinical ties to diabetes and could help distinguish higher-risk individuals. Lifestyle behaviors vary across respondents: **63%** regularly eat fruits and **81%** eat vegetables, while heavy alcohol use is relatively rare (**6%**). These indicators collectively provide meaningful information about metabolic health and are likely to contribute to the model\'s ability to predict diabetes.
+Stroke (**4%**) and heart disease or heart attack (**9%**)---are less common but show strong clinical ties to diabetes and could help distinguish higher-risk individuals. Lifestyle behaviors vary across respondents: **63%** regularly eat fruits and **81%** eat vegetables, while heavy alcohol use is relatively rare (**6%**). These indicators collectively provide meaningful information about metabolic health and are likely to contribute to the model's ability to predict diabetes.
 
 ### Plotting Binary Variables
 

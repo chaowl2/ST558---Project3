@@ -247,7 +247,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cost_complexity</span>(),</span>
 <span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tree_depth</span>(<span class="at">range =</span> <span class="fu">c</span>(3L, 9L)),</span>
 <span id="cb7-12"><a href="#cb7-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">min_n</span>(<span class="at">range =</span> <span class="fu">c</span>(10L, 40L)),</span>
-<span id="cb7-13"><a href="#cb7-13" aria-hidden="true" tabindex="-1"></a>  <span class="at">levels =</span> <span class="dv">3</span>   <span class="co"># 3 x 3 x 3 = 27 combos</span></span>
+<span id="cb7-13"><a href="#cb7-13" aria-hidden="true" tabindex="-1"></a>  <span class="at">levels =</span> <span class="dv">3</span>   </span>
 <span id="cb7-14"><a href="#cb7-14" aria-hidden="true" tabindex="-1"></a>)</span>
 <span id="cb7-15"><a href="#cb7-15" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb7-16"><a href="#cb7-16" aria-hidden="true" tabindex="-1"></a>tree_workflow_small <span class="ot">&lt;-</span> <span class="fu">workflow</span>() <span class="sc">|&gt;</span></span>
@@ -1149,6 +1149,23 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
   &lt;chr&gt;       &lt;chr&gt;          &lt;dbl&gt;
 1 mn_log_loss binary         0.327</code></pre>
 </div>
+<div class="sourceCode cell-code" id="cb290"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb290-1"><a href="#cb290-1" aria-hidden="true" tabindex="-1"></a>tree_class <span class="ot">&lt;-</span> <span class="fu">predict</span>(tree_final_fit, test_data, <span class="at">type =</span> <span class="st">"class"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb290-2"><a href="#cb290-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">bind_cols</span>(test_data <span class="sc">|&gt;</span> <span class="fu">select</span>(diabetes_binary))</span>
+<span id="cb290-3"><a href="#cb290-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb290-4"><a href="#cb290-4" aria-hidden="true" tabindex="-1"></a><span class="fu">conf_mat</span>(tree_class, <span class="at">truth =</span> diabetes_binary, <span class="at">estimate =</span> .pred_class)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>             Truth
+Prediction    No_Diabetes Diabetes
+  No_Diabetes       64001     8861
+  Diabetes           1500     1743</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb292"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb292-1"><a href="#cb292-1" aria-hidden="true" tabindex="-1"></a><span class="fu">accuracy</span>(tree_class, <span class="at">truth =</span> diabetes_binary, <span class="at">estimate =</span> .pred_class)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 1 × 3
+  .metric  .estimator .estimate
+  &lt;chr&gt;    &lt;chr&gt;          &lt;dbl&gt;
+1 accuracy binary         0.864</code></pre>
+</div>
 </div>
 </section>
 <section id="conclusion" class="level3">
@@ -1161,9 +1178,436 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <p>A random forest is an ensemble learning method that builds a large number of decision trees and combines their predictions to produce a more accurate and stable classifier. Each tree in the forest is trained on a bootstrap sample of the data (sampling with replacement), and at each split, the algorithm considers only a random subset of predictors rather than all available predictors. These two sources of randomness make the individual trees more diverse. When it’s time to predict, the forest aggregates the results—typically by taking a majority vote for classification problems.</p>
 <p>Random forests improve on a single tree by reducing overfitting and increasing stability. Individual trees are highly variable and sensitive to small changes in the data, but by averaging many decorrelated trees, random forests lower variance and produce more accurate, reliable predictions on new data.</p>
 <div class="cell">
-
+<div class="sourceCode cell-code" id="cb294"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb294-1"><a href="#cb294-1" aria-hidden="true" tabindex="-1"></a>rf_spec <span class="ot">&lt;-</span> <span class="fu">rand_forest</span>(</span>
+<span id="cb294-2"><a href="#cb294-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">mode =</span> <span class="st">"classification"</span>,</span>
+<span id="cb294-3"><a href="#cb294-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">mtry  =</span> <span class="fu">tune</span>(),</span>
+<span id="cb294-4"><a href="#cb294-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">trees =</span> <span class="dv">500</span>,</span>
+<span id="cb294-5"><a href="#cb294-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">min_n =</span> <span class="fu">tune</span>()</span>
+<span id="cb294-6"><a href="#cb294-6" aria-hidden="true" tabindex="-1"></a>) <span class="sc">|&gt;</span></span>
+<span id="cb294-7"><a href="#cb294-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">set_engine</span>(<span class="st">"ranger"</span>, <span class="at">importance =</span> <span class="st">"impurity"</span>)</span>
+<span id="cb294-8"><a href="#cb294-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb294-9"><a href="#cb294-9" aria-hidden="true" tabindex="-1"></a>rf_workflow_small <span class="ot">&lt;-</span> <span class="fu">workflow</span>() <span class="sc">|&gt;</span></span>
+<span id="cb294-10"><a href="#cb294-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">add_model</span>(rf_spec) <span class="sc">|&gt;</span></span>
+<span id="cb294-11"><a href="#cb294-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">add_recipe</span>(diabetes_recipe)</span>
+<span id="cb294-12"><a href="#cb294-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb294-13"><a href="#cb294-13" aria-hidden="true" tabindex="-1"></a><span class="co"># number of predictors (for mtry upper bound)</span></span>
+<span id="cb294-14"><a href="#cb294-14" aria-hidden="true" tabindex="-1"></a>p <span class="ot">&lt;-</span> <span class="fu">length</span>(<span class="fu">setdiff</span>(<span class="fu">names</span>(small_train), <span class="st">"diabetes_binary"</span>))</span>
+<span id="cb294-15"><a href="#cb294-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb294-16"><a href="#cb294-16" aria-hidden="true" tabindex="-1"></a>rf_grid_small <span class="ot">&lt;-</span> <span class="fu">grid_regular</span>(</span>
+<span id="cb294-17"><a href="#cb294-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mtry</span>(<span class="at">range =</span> <span class="fu">c</span>(2L, p)),</span>
+<span id="cb294-18"><a href="#cb294-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">min_n</span>(<span class="at">range =</span> <span class="fu">c</span>(5L, 50L)),</span>
+<span id="cb294-19"><a href="#cb294-19" aria-hidden="true" tabindex="-1"></a>  <span class="at">levels =</span> <span class="dv">3</span>   )</span>
+<span id="cb294-20"><a href="#cb294-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb294-21"><a href="#cb294-21" aria-hidden="true" tabindex="-1"></a>cl <span class="ot">&lt;-</span> <span class="fu">makeCluster</span>(parallel<span class="sc">::</span><span class="fu">detectCores</span>() <span class="sc">-</span> <span class="dv">1</span>)</span>
+<span id="cb294-22"><a href="#cb294-22" aria-hidden="true" tabindex="-1"></a><span class="fu">registerDoParallel</span>(cl)</span>
+<span id="cb294-23"><a href="#cb294-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb294-24"><a href="#cb294-24" aria-hidden="true" tabindex="-1"></a>ctrl <span class="ot">&lt;-</span> <span class="fu">control_grid</span>(<span class="at">verbose =</span> <span class="cn">TRUE</span>, <span class="at">allow_par =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb294-25"><a href="#cb294-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb294-26"><a href="#cb294-26" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">123</span>)</span>
+<span id="cb294-27"><a href="#cb294-27" aria-hidden="true" tabindex="-1"></a>rf_tuned_small <span class="ot">&lt;-</span> <span class="fu">tune_grid</span>(</span>
+<span id="cb294-28"><a href="#cb294-28" aria-hidden="true" tabindex="-1"></a>  rf_workflow_small,</span>
+<span id="cb294-29"><a href="#cb294-29" aria-hidden="true" tabindex="-1"></a>  <span class="at">resamples =</span> folds,</span>
+<span id="cb294-30"><a href="#cb294-30" aria-hidden="true" tabindex="-1"></a>  <span class="at">grid      =</span> rf_grid_small,</span>
+<span id="cb294-31"><a href="#cb294-31" aria-hidden="true" tabindex="-1"></a>  <span class="at">metrics   =</span> logloss_metric,</span>
+<span id="cb294-32"><a href="#cb294-32" aria-hidden="true" tabindex="-1"></a>  <span class="at">control   =</span> ctrl</span>
+<span id="cb294-33"><a href="#cb294-33" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>i Fold1: preprocessor 1/1</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>i Fold1: preprocessor 1/1, model 1/9</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>i Fold1: preprocessor 1/1, model 1/9 (predictions)</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>i Fold1: preprocessor 1/1, model 2/9</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>i Fold1: preprocessor 1/1, model 2/9 (predictions)</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>i Fold1: preprocessor 1/1, model 3/9</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>i Fold1: preprocessor 1/1, model 3/9 (predictions)</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>i Fold1: preprocessor 1/1, model 4/9</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>i Fold1: preprocessor 1/1, model 4/9 (predictions)</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>i Fold1: preprocessor 1/1, model 5/9</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>i Fold1: preprocessor 1/1, model 5/9 (predictions)</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>i Fold1: preprocessor 1/1, model 6/9</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>i Fold1: preprocessor 1/1, model 6/9 (predictions)</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>i Fold1: preprocessor 1/1, model 7/9</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>i Fold1: preprocessor 1/1, model 7/9 (predictions)</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>i Fold1: preprocessor 1/1, model 8/9</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>i Fold1: preprocessor 1/1, model 8/9 (predictions)</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>i Fold1: preprocessor 1/1, model 9/9</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>i Fold1: preprocessor 1/1, model 9/9 (predictions)</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>i Fold2: preprocessor 1/1</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>i Fold2: preprocessor 1/1, model 1/9</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>i Fold2: preprocessor 1/1, model 1/9 (predictions)</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>i Fold2: preprocessor 1/1, model 2/9</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>i Fold2: preprocessor 1/1, model 2/9 (predictions)</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>i Fold2: preprocessor 1/1, model 3/9</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>i Fold2: preprocessor 1/1, model 3/9 (predictions)</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>i Fold2: preprocessor 1/1, model 4/9</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>i Fold2: preprocessor 1/1, model 4/9 (predictions)</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>i Fold2: preprocessor 1/1, model 5/9</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>i Fold2: preprocessor 1/1, model 5/9 (predictions)</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>i Fold2: preprocessor 1/1, model 6/9</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>i Fold2: preprocessor 1/1, model 6/9 (predictions)</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>i Fold2: preprocessor 1/1, model 7/9</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>i Fold2: preprocessor 1/1, model 7/9 (predictions)</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>i Fold2: preprocessor 1/1, model 8/9</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>i Fold2: preprocessor 1/1, model 8/9 (predictions)</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>i Fold2: preprocessor 1/1, model 9/9</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>i Fold2: preprocessor 1/1, model 9/9 (predictions)</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>i Fold3: preprocessor 1/1</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>i Fold3: preprocessor 1/1, model 1/9</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>i Fold3: preprocessor 1/1, model 1/9 (predictions)</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>i Fold3: preprocessor 1/1, model 2/9</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>i Fold3: preprocessor 1/1, model 2/9 (predictions)</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>i Fold3: preprocessor 1/1, model 3/9</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>i Fold3: preprocessor 1/1, model 3/9 (predictions)</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>i Fold3: preprocessor 1/1, model 4/9</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>i Fold3: preprocessor 1/1, model 4/9 (predictions)</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>i Fold3: preprocessor 1/1, model 5/9</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>i Fold3: preprocessor 1/1, model 5/9 (predictions)</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>i Fold3: preprocessor 1/1, model 6/9</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>i Fold3: preprocessor 1/1, model 6/9 (predictions)</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>i Fold3: preprocessor 1/1, model 7/9</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>i Fold3: preprocessor 1/1, model 7/9 (predictions)</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>i Fold3: preprocessor 1/1, model 8/9</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>i Fold3: preprocessor 1/1, model 8/9 (predictions)</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>i Fold3: preprocessor 1/1, model 9/9</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>i Fold3: preprocessor 1/1, model 9/9 (predictions)</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>i Fold4: preprocessor 1/1</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>i Fold4: preprocessor 1/1, model 1/9</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>i Fold4: preprocessor 1/1, model 1/9 (predictions)</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>i Fold4: preprocessor 1/1, model 2/9</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>i Fold4: preprocessor 1/1, model 2/9 (predictions)</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>i Fold4: preprocessor 1/1, model 3/9</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>i Fold4: preprocessor 1/1, model 3/9 (predictions)</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>i Fold4: preprocessor 1/1, model 4/9</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>i Fold4: preprocessor 1/1, model 4/9 (predictions)</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>i Fold4: preprocessor 1/1, model 5/9</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>i Fold4: preprocessor 1/1, model 5/9 (predictions)</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>i Fold4: preprocessor 1/1, model 6/9</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>i Fold4: preprocessor 1/1, model 6/9 (predictions)</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>i Fold4: preprocessor 1/1, model 7/9</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>i Fold4: preprocessor 1/1, model 7/9 (predictions)</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>i Fold4: preprocessor 1/1, model 8/9</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>i Fold4: preprocessor 1/1, model 8/9 (predictions)</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>i Fold4: preprocessor 1/1, model 9/9</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>i Fold4: preprocessor 1/1, model 9/9 (predictions)</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>i Fold5: preprocessor 1/1</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>i Fold5: preprocessor 1/1, model 1/9</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>i Fold5: preprocessor 1/1, model 1/9 (predictions)</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>i Fold5: preprocessor 1/1, model 2/9</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>i Fold5: preprocessor 1/1, model 2/9 (predictions)</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>i Fold5: preprocessor 1/1, model 3/9</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>i Fold5: preprocessor 1/1, model 3/9 (predictions)</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>i Fold5: preprocessor 1/1, model 4/9</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>i Fold5: preprocessor 1/1, model 4/9 (predictions)</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>i Fold5: preprocessor 1/1, model 5/9</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>i Fold5: preprocessor 1/1, model 5/9 (predictions)</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>i Fold5: preprocessor 1/1, model 6/9</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>i Fold5: preprocessor 1/1, model 6/9 (predictions)</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>i Fold5: preprocessor 1/1, model 7/9</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>i Fold5: preprocessor 1/1, model 7/9 (predictions)</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>i Fold5: preprocessor 1/1, model 8/9</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>i Fold5: preprocessor 1/1, model 8/9 (predictions)</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>i Fold5: preprocessor 1/1, model 9/9</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>i Fold5: preprocessor 1/1, model 9/9 (predictions)</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb390"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb390-1"><a href="#cb390-1" aria-hidden="true" tabindex="-1"></a><span class="fu">stopCluster</span>(cl)</span>
+<span id="cb390-2"><a href="#cb390-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb390-3"><a href="#cb390-3" aria-hidden="true" tabindex="-1"></a><span class="fu">collect_metrics</span>(rf_tuned_small)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 9 × 8
+   mtry min_n .metric     .estimator  mean     n std_err .config        
+  &lt;int&gt; &lt;int&gt; &lt;chr&gt;       &lt;chr&gt;      &lt;dbl&gt; &lt;int&gt;   &lt;dbl&gt; &lt;chr&gt;          
+1     2     5 mn_log_loss binary     0.323     5 0.00154 pre0_mod1_post0
+2     2    27 mn_log_loss binary     0.323     5 0.00157 pre0_mod2_post0
+3     2    50 mn_log_loss binary     0.324     5 0.00150 pre0_mod3_post0
+4    12     5 mn_log_loss binary     0.359     5 0.00664 pre0_mod4_post0
+5    12    27 mn_log_loss binary     0.333     5 0.00368 pre0_mod5_post0
+6    12    50 mn_log_loss binary     0.329     5 0.00370 pre0_mod6_post0
+7    22     5 mn_log_loss binary     0.373     5 0.00779 pre0_mod7_post0
+8    22    27 mn_log_loss binary     0.342     5 0.00577 pre0_mod8_post0
+9    22    50 mn_log_loss binary     0.334     5 0.00398 pre0_mod9_post0</code></pre>
+</div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb392"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb392-1"><a href="#cb392-1" aria-hidden="true" tabindex="-1"></a>best_rf <span class="ot">&lt;-</span> <span class="fu">select_best</span>(rf_tuned_small, <span class="at">metric =</span> <span class="st">"mn_log_loss"</span>)</span>
+<span id="cb392-2"><a href="#cb392-2" aria-hidden="true" tabindex="-1"></a>best_rf</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 1 × 3
+   mtry min_n .config        
+  &lt;int&gt; &lt;int&gt; &lt;chr&gt;          
+1     2    27 pre0_mod2_post0</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb394"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb394-1"><a href="#cb394-1" aria-hidden="true" tabindex="-1"></a>rf_workflow <span class="ot">&lt;-</span> <span class="fu">workflow</span>() <span class="sc">|&gt;</span></span>
+<span id="cb394-2"><a href="#cb394-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">add_model</span>(rf_spec) <span class="sc">|&gt;</span></span>
+<span id="cb394-3"><a href="#cb394-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">add_recipe</span>(diabetes_recipe)</span>
+<span id="cb394-4"><a href="#cb394-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb394-5"><a href="#cb394-5" aria-hidden="true" tabindex="-1"></a>rf_final_wf <span class="ot">&lt;-</span> rf_workflow <span class="sc">|&gt;</span> <span class="fu">finalize_workflow</span>(best_rf)</span>
+<span id="cb394-6"><a href="#cb394-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb394-7"><a href="#cb394-7" aria-hidden="true" tabindex="-1"></a>rf_final_fit <span class="ot">&lt;-</span> <span class="fu">fit</span>(rf_final_wf, <span class="at">data =</span> train_data)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </section>
+<section id="evaluate-on-test-set-1" class="level3">
+<h3 class="anchored" data-anchor-id="evaluate-on-test-set-1">Evaluate on test set</h3>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb395"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb395-1"><a href="#cb395-1" aria-hidden="true" tabindex="-1"></a>rf_test_preds <span class="ot">&lt;-</span> <span class="fu">predict</span>(rf_final_fit, test_data, <span class="at">type =</span> <span class="st">"prob"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb395-2"><a href="#cb395-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">bind_cols</span>(test_data <span class="sc">|&gt;</span> <span class="fu">select</span>(diabetes_binary))</span>
+<span id="cb395-3"><a href="#cb395-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb395-4"><a href="#cb395-4" aria-hidden="true" tabindex="-1"></a><span class="fu">mn_log_loss</span>(rf_test_preds,</span>
+<span id="cb395-5"><a href="#cb395-5" aria-hidden="true" tabindex="-1"></a>            <span class="at">truth =</span> diabetes_binary,</span>
+<span id="cb395-6"><a href="#cb395-6" aria-hidden="true" tabindex="-1"></a>            .pred_Diabetes,</span>
+<span id="cb395-7"><a href="#cb395-7" aria-hidden="true" tabindex="-1"></a>            <span class="at">event_level =</span> <span class="st">"second"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 1 × 3
+  .metric     .estimator .estimate
+  &lt;chr&gt;       &lt;chr&gt;          &lt;dbl&gt;
+1 mn_log_loss binary         0.320</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb397"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb397-1"><a href="#cb397-1" aria-hidden="true" tabindex="-1"></a>rf_class <span class="ot">&lt;-</span> <span class="fu">predict</span>(rf_final_fit, test_data, <span class="at">type =</span> <span class="st">"class"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb397-2"><a href="#cb397-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">bind_cols</span>(test_data <span class="sc">|&gt;</span> <span class="fu">select</span>(diabetes_binary))</span>
+<span id="cb397-3"><a href="#cb397-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb397-4"><a href="#cb397-4" aria-hidden="true" tabindex="-1"></a><span class="fu">conf_mat</span>(rf_class, <span class="at">truth =</span> diabetes_binary, <span class="at">estimate =</span> .pred_class)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>             Truth
+Prediction    No_Diabetes Diabetes
+  No_Diabetes       65175     9983
+  Diabetes            326      621</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb399"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb399-1"><a href="#cb399-1" aria-hidden="true" tabindex="-1"></a><span class="fu">accuracy</span>(rf_class, <span class="at">truth =</span> diabetes_binary, <span class="at">estimate =</span> .pred_class)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 1 × 3
+  .metric  .estimator .estimate
+  &lt;chr&gt;    &lt;chr&gt;          &lt;dbl&gt;
+1 accuracy binary         0.865</code></pre>
+</div>
+</div>
+</section>
+</section>
+<section id="final-model-selection" class="level2">
+<h2 class="anchored" data-anchor-id="final-model-selection">Final Model Selection</h2>
+<p>Both the Classification Tree and Random Forest models were evaluated on the exact same test set. The difference in the number of predicted "Diabetes" cases across the confusion matrices does not reflect differing sample sizes, but rather differences in <strong>classification behavior</strong>.</p>
+<p>The Random Forest is more conservative: it predicts far fewer positive cases, pushing more borderline individuals into the majority class ("No_Diabetes"). This reduces false positives but increases false negatives — a common trade-off when working with imbalanced data. Even so, the Random Forest still demonstrates superior overall performance when evaluated using our primary metrics.</p>
+<p><strong>Performance Metrics</strong></p>
+<table class="table">
+<thead>
+<tr class="header">
+<th>Model</th>
+<th>Log Loss ↓</th>
+<th>Accuracy ↑</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Classification Tree</td>
+<td><strong>0.3269909</strong></td>
+<td><strong>0.8638591</strong></td>
+</tr>
+<tr class="even">
+<td>Random Forest</td>
+<td><strong>0.3195887</strong></td>
+<td><strong>0.8645424</strong></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Interpretation</strong></p>
+<p><strong>Accuracy:</strong></p>
+<ul>
+<li><p>The Random Forest again performs slightly better (<strong>0.8645</strong> vs <strong>0.8639</strong>), correctly classifying more observations overall.</p></li>
+<li><p>While the Random Forest predicts fewer individuals as "Diabetes," it improves the overall fit of the probability model and provides more stable predictions.</p></li>
+<li><p>Ensemble methods like random forests reduce variance by averaging many trees, which typically leads to better predictive performance than a single tree.</p></li>
+</ul>
+<p><strong>Log Loss:</strong></p>
+<ul>
+<li><p>Lower values indicate better-calibrated probability estimates</p></li>
+<li><p>The Random Forest achieves a lower log loss (<strong>0.3196</strong> vs <strong>0.3270</strong>), meaning its predicted probabilities more closely match the true outcomes.</p></li>
+</ul>
+<p><strong>Conclusion</strong></p>
+<p>Despite being more conservative in its classification decisions, the <strong>Random Forest</strong> produces <strong>better-calibrated probabilities</strong> and <strong>slightly higher accuracy</strong>, making it the overall best-performing model on the test set.</p>
 </section>
 
 </main>

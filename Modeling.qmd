@@ -106,7 +106,7 @@ predictors <- c("bmi",
                 "stroke")
 ```
 
-### Pre-proccessing
+### Pre-processing
 
 ```{r}
 diabetes_recipe <- recipe(diabetes_binary ~ ., data = train_data) |>
@@ -126,7 +126,7 @@ logloss_metric <- metric_set(mn_log_loss)
 
 Classification Tree Definition
 
-A **classification tree** is a predictive modeling method that uses a tree-like structure to classify observations into categories. The algorithm repeatedly splits the data into smaller and more similar groups based on predictor variables. At each split, it chooses the variable and cutoff that best separate the classes---typically using measures like Gini impurity or information gain. These splits continue until the tree reaches a stopping rule, such as a minimum number of observations in a node. The final leaves of the tree represent predicted classes. Classification trees are easy to interpret because they mimic human decision-making: you follow a sequence of \"if--then\" rules to arrive at a prediction. They can be unstable and prone to overfitting, which is why ensemble methods like random forests are often used to improve performance.
+A **classification tree** is a predictive modeling method that uses a tree-like structure to classify observations into categories. The algorithm repeatedly splits the data into smaller and more similar groups based on predictor variables. At each split, it chooses the variable and cutoff that best separate the classes---typically using measures like Gini impurity or information gain. These splits continue until the tree reaches a stopping rule, such as a minimum number of observations in a node. The final leaves of the tree represent predicted classes. Classification trees are easy to interpret because they mimic human decision-making: you follow a sequence of "if--then" rules to arrive at a prediction. They can be unstable and prone to overfitting, which is why ensemble methods like random forests are often used to improve performance.
 
 ```{r}
 tree_spec <- decision_tree(
@@ -203,9 +203,9 @@ accuracy(tree_class, truth = diabetes_binary, estimate = .pred_class)
 
 ### Conclusion
 
-To model the probability of diabetes, I tuned a classification tree using a stratified subsample of the training data. The tuning grid explored a range of values for the tree\'s cost-complexity penalty, maximum depth, and minimum node size. After identifying the hyperparameter combination that minimized cross-validated log-loss, I refit the finalized tree on the **full 70% training split**.
+To model the probability of diabetes, I tuned a classification tree using a stratified subsample of the training data. The tuning grid explored a range of values for the tree's cost-complexity penalty, maximum depth, and minimum node size. After identifying the hyperparameter combination that minimized cross-validated log-loss, I refit the finalized tree on the **full 70% training split**.
 
-To evaluate generalization performance, I predicted class probabilities for the **held-out 30% test set** and computed log-loss using the predicted probability of the \"Diabetes\" class. The tuned classification tree achieved a **test log-loss of 0.32699**, indicating that the model produces reasonably calibrated probability estimates for diabetes risk. This performance will serve as a benchmark when comparing against the random forest.
+To evaluate generalization performance, I predicted class probabilities for the **held-out 30% test set** and computed log-loss using the predicted probability of the "Diabetes" class. The tuned classification tree achieved a **test log-loss of 0.32699**, indicating that the model produces reasonably calibrated probability estimates for diabetes risk. This performance will serve as a benchmark when comparing against the random forest.
 
 ### Random Forest Definition
 
@@ -266,7 +266,6 @@ rf_workflow <- workflow() |>
 rf_final_wf <- rf_workflow |> finalize_workflow(best_rf)
 
 rf_final_fit <- fit(rf_final_wf, data = train_data)
-
 ```
 
 ### Evaluate on test set
@@ -290,9 +289,9 @@ accuracy(rf_class, truth = diabetes_binary, estimate = .pred_class)
 
 ## Final Model Selection
 
-Both the Classification Tree and Random Forest models were evaluated on the exact same test set. The difference in the number of predicted \"Diabetes\" cases across the confusion matrices does not reflect differing sample sizes, but rather differences in **classification behavior**.
+Both the Classification Tree and Random Forest models were evaluated on the exact same test set. The difference in the number of predicted "Diabetes" cases across the confusion matrices does not reflect differing sample sizes, but rather differences in **classification behavior**.
 
-The Random Forest is more conservative: it predicts far fewer positive cases, pushing more borderline individuals into the majority class (\"No_Diabetes\"). This reduces false positives but increases false negatives --- a common trade-off when working with imbalanced data. Even so, the Random Forest still demonstrates superior overall performance when evaluated using our primary metrics.
+The Random Forest is more conservative: it predicts far fewer positive cases, pushing more borderline individuals into the majority class ("No_Diabetes"). This reduces false positives but increases false negatives --- a common trade-off when working with imbalanced data. Even so, the Random Forest still demonstrates superior overall performance when evaluated using our primary metrics.
 
 **Performance Metrics**
 
@@ -307,7 +306,7 @@ The Random Forest is more conservative: it predicts far fewer positive cases, pu
 
 -   The Random Forest again performs slightly better (**0.8645** vs **0.8639**), correctly classifying more observations overall.
 
--   While the Random Forest predicts fewer individuals as \"Diabetes,\" it improves the overall fit of the probability model and provides more stable predictions.
+-   While the Random Forest predicts fewer individuals as "Diabetes," it improves the overall fit of the probability model and provides more stable predictions.
 
 -   Ensemble methods like random forests reduce variance by averaging many trees, which typically leads to better predictive performance than a single tree.
 
