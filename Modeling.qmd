@@ -96,15 +96,7 @@ test_data  <- testing(data_split)
 
 ### Predictors
 
-```{r}
-predictors <- c("bmi",
-                "high_bp",
-                "high_chol",
-                "phys_activity",
-                "age",
-                "smoker",
-                "stroke")
-```
+I am choosing to use all predictors.
 
 ### Pre-processing
 
