@@ -1,0 +1,333 @@
+---
+title: "Modeling"
+format: html
+editor: visual
+---
+
+```{r}
+#| message: false
+#| warning: false
+library(tidyverse)
+library(tidymodels)
+tidymodels_prefer()
+library(rsample) 
+library(doParallel)
+```
+
+
+Our goal is to **predict `diabetes_binary`**, and to do so we will compare two models: a **classification tree** and a **random forest**. Each model will be evaluated using **log-loss** as the primary performance metric, with **5-fold cross-validation** applied on the **70/30 train/test split** to assess how well each approach generalizes to unseen data.
+
+## Data and split
+
+
+```{r}
+
+data <- read_csv("data/diabetes_binary_health_indicators_BRFSS2015.csv", show_col_types = FALSE) |>
+  janitor::clean_names() |>
+  mutate(
+    diabetes_binary = factor(diabetes_binary, levels = c(0, 1),
+    labels = c("No_Diabetes", "Diabetes")),
+    high_bp  = factor(high_bp,  levels = c(0, 1), labels = c("No", "Yes")),
+    high_chol = factor(high_chol, levels = c(0, 1), labels = c("No", "Yes")),
+    chol_check = factor(chol_check, level = c(0,1), labels = c("No", "Yes")),
+    smoker = factor(smoker, levels = c(0, 1), labels = c("No", "Yes")),
+    stroke = factor(stroke, levels = c(0, 1), labels = c("No", "Yes")),
+    heart_diseaseor_attack = factor(heart_diseaseor_attack, levels = c(0, 1), labels = c("No",     "Yes")),
+    phys_activity = factor(phys_activity, levels = c(0, 1), labels = c("No", "Yes")),
+    fruits = factor(fruits, levels = c(0, 1), labels = c("No", "Yes")),
+    veggies = factor(veggies, levels = c(0, 1), labels = c("No", "Yes")),
+    hvy_alcohol_consump = factor(hvy_alcohol_consump, levels = c(0, 1), labels = c("No", "Yes"  )),
+    any_healthcare = factor(any_healthcare, levels = c(0, 1), labels = c("No", "Yes")),
+    no_docbc_cost = factor(no_docbc_cost, levels = c(0, 1), labels = c("No", "Yes")),
+    gen_hlth <- factor(
+      gen_hlth,
+      levels = 1:5,
+      labels = c("Excellent", "Very Good", "Good", "Fair", "Poor")
+    ),
+    diff_walk = factor(diff_walk, levels = c(0, 1), labels = c("No", "Yes")),
+    sex = factor(sex, levels = c(0, 1), labels = c("Female", "Male")),
+    education <- factor(
+      education,
+      levels = 1:6,
+      labels = c(
+        "K-8",
+        "Grades 1-8",
+        "Grades 9-11",
+        "High School / GED",
+        "Some College",
+        "College Graduate"
+      )
+    ),
+    income <- factor(
+      income,
+      levels = 1:8,
+      labels = c(
+        "<10k",
+        "10-15k",
+        "15-20k",
+        "20-25k",
+        "25-35k",
+        "35-50k",
+        "50-75k",
+        "75k+"
+      )
+    ),
+    age = factor(
+      age,
+      levels = 1:13,
+      labels = c(
+        "18–24", "25–29", "30–34", "35–39",
+        "40–44", "45–49", "50–54", "55–59",
+        "60–64", "65–69", "70–74", "75–79",
+        "80+"
+      )
+    )
+  )
+```
+
+
+### Splitting the data
+
+
+```{r}
+set.seed(123)
+data_split <- initial_split(data, prop = 0.7, strata = diabetes_binary)
+train_data <- training(data_split)
+small_train <- train_data |>
+  dplyr::sample_frac(0.2)
+test_data  <- testing(data_split)
+```
+
+
+### Predictors
+
+I am choosing to use all predictors.
+
+### Pre-processing
+
+
+```{r}
+diabetes_recipe <- recipe(diabetes_binary ~ ., data = train_data) |>
+  step_zv(all_predictors())
+
+```
+
+
+Set-up CV and setup Metric = 'log-loss'
+
+
+```{r}
+set.seed(123)
+folds <- vfold_cv(small_train, v = 5, strata = diabetes_binary)
+
+logloss_metric <- metric_set(mn_log_loss)
+
+```
+
+
+Classification Tree Definition
+
+A **classification tree** is a predictive modeling method that uses a tree-like structure to classify observations into categories. The algorithm repeatedly splits the data into smaller and more similar groups based on predictor variables. At each split, it chooses the variable and cutoff that best separate the classes---typically using measures like Gini impurity or information gain. These splits continue until the tree reaches a stopping rule, such as a minimum number of observations in a node. The final leaves of the tree represent predicted classes. Classification trees are easy to interpret because they mimic human decision-making: you follow a sequence of "if--then" rules to arrive at a prediction. They can be unstable and prone to overfitting, which is why ensemble methods like random forests are often used to improve performance.
+
+
+```{r}
+tree_spec <- decision_tree(
+  mode = "classification",
+  cost_complexity = tune(),
+  tree_depth = tune(),
+  min_n = tune()
+) |>
+  set_engine("rpart")
+
+tree_grid_small <- grid_regular(
+  cost_complexity(),
+  tree_depth(range = c(3L, 9L)),
+  min_n(range = c(10L, 40L)),
+  levels = 3   
+)
+
+tree_workflow_small <- workflow() |>
+  add_model(tree_spec) |>
+  add_recipe(diabetes_recipe)
+
+# set up parallel backend
+cl <- makeCluster(parallel::detectCores() - 1)
+registerDoParallel(cl)
+
+# tuning control (this is what goes in `control =`)
+ctrl <- control_grid(verbose = TRUE, allow_par = TRUE)
+
+set.seed(123)
+tree_tuned_small <- tune_grid(
+  tree_workflow_small,
+  resamples = folds,
+  grid      = tree_grid_small,
+  metrics   = logloss_metric,
+  control   = ctrl
+)
+
+stopCluster(cl)
+
+collect_metrics(tree_tuned_small)
+
+```
+
+
+### Pick the best tree by mean log loss
+
+
+```{r}
+best_tree <- select_best(tree_tuned_small, metric = "mn_log_loss")
+
+best_tree
+
+tree_final_wf <- finalize_workflow(tree_workflow_small, best_tree)
+
+tree_final_fit <- fit(tree_final_wf, data = train_data)
+```
+
+
+### Evaluate on test set
+
+
+```{r}
+tree_test_preds <- predict(tree_final_fit, test_data, type = "prob") |>
+  bind_cols(test_data |> select(diabetes_binary))
+
+mn_log_loss(tree_test_preds,
+            truth = diabetes_binary,
+            .pred_Diabetes,
+            event_level = "second")
+
+tree_class <- predict(tree_final_fit, test_data, type = "class") |>
+  bind_cols(test_data |> select(diabetes_binary))
+
+conf_mat(tree_class, truth = diabetes_binary, estimate = .pred_class)
+
+accuracy(tree_class, truth = diabetes_binary, estimate = .pred_class)
+```
+
+
+### Conclusion
+
+To model the probability of diabetes, I tuned a classification tree using a stratified subsample of the training data. The tuning grid explored a range of values for the tree's cost-complexity penalty, maximum depth, and minimum node size. After identifying the hyperparameter combination that minimized cross-validated log-loss, I refit the finalized tree on the **full 70% training split**.
+
+To evaluate generalization performance, I predicted class probabilities for the **held-out 30% test set** and computed log-loss using the predicted probability of the "Diabetes" class. The tuned classification tree achieved a **test log-loss of 0.32699**, indicating that the model produces reasonably calibrated probability estimates for diabetes risk. This performance will serve as a benchmark when comparing against the random forest.
+
+### Random Forest Definition
+
+A random forest is an ensemble learning method that builds a large number of decision trees and combines their predictions to produce a more accurate and stable classifier. Each tree in the forest is trained on a bootstrap sample of the data (sampling with replacement), and at each split, the algorithm considers only a random subset of predictors rather than all available predictors. These two sources of randomness make the individual trees more diverse. When it's time to predict, the forest aggregates the results---typically by taking a majority vote for classification problems.
+
+Random forests improve on a single tree by reducing overfitting and increasing stability. Individual trees are highly variable and sensitive to small changes in the data, but by averaging many decorrelated trees, random forests lower variance and produce more accurate, reliable predictions on new data.
+
+
+```{r}
+rf_spec <- rand_forest(
+  mode = "classification",
+  mtry  = tune(),
+  trees = 500,
+  min_n = tune()
+) |>
+  set_engine("ranger", importance = "impurity")
+
+rf_workflow_small <- workflow() |>
+  add_model(rf_spec) |>
+  add_recipe(diabetes_recipe)
+
+# number of predictors (for mtry upper bound)
+p <- length(setdiff(names(small_train), "diabetes_binary"))
+
+rf_grid_small <- grid_regular(
+  mtry(range = c(2L, p)),
+  min_n(range = c(5L, 50L)),
+  levels = 3   )
+
+cl <- makeCluster(parallel::detectCores() - 1)
+registerDoParallel(cl)
+
+ctrl <- control_grid(verbose = TRUE, allow_par = TRUE)
+
+set.seed(123)
+rf_tuned_small <- tune_grid(
+  rf_workflow_small,
+  resamples = folds,
+  grid      = rf_grid_small,
+  metrics   = logloss_metric,
+  control   = ctrl
+)
+
+stopCluster(cl)
+
+collect_metrics(rf_tuned_small)
+
+```
+
+```{r}
+
+best_rf <- select_best(rf_tuned_small, metric = "mn_log_loss")
+best_rf
+
+rf_workflow <- workflow() |>
+  add_model(rf_spec) |>
+  add_recipe(diabetes_recipe)
+
+rf_final_wf <- rf_workflow |> finalize_workflow(best_rf)
+
+rf_final_fit <- fit(rf_final_wf, data = train_data)
+```
+
+
+### Evaluate on test set
+
+
+```{r}
+rf_test_preds <- predict(rf_final_fit, test_data, type = "prob") |>
+  bind_cols(test_data |> select(diabetes_binary))
+
+mn_log_loss(rf_test_preds,
+            truth = diabetes_binary,
+            .pred_Diabetes,
+            event_level = "second")
+
+rf_class <- predict(rf_final_fit, test_data, type = "class") |>
+  bind_cols(test_data |> select(diabetes_binary))
+
+conf_mat(rf_class, truth = diabetes_binary, estimate = .pred_class)
+accuracy(rf_class, truth = diabetes_binary, estimate = .pred_class)
+
+```
+
+
+## Final Model Selection
+
+Both the Classification Tree and Random Forest models were evaluated on the exact same test set. The difference in the number of predicted "Diabetes" cases across the confusion matrices does not reflect differing sample sizes, but rather differences in **classification behavior**.
+
+The Random Forest is more conservative: it predicts far fewer positive cases, pushing more borderline individuals into the majority class ("No_Diabetes"). This reduces false positives but increases false negatives --- a common trade-off when working with imbalanced data. Even so, the Random Forest still demonstrates superior overall performance when evaluated using our primary metrics.
+
+**Performance Metrics**
+
+| Model               | Log Loss ↓    | Accuracy ↑    |
+|---------------------|---------------|---------------|
+| Classification Tree | **0.3269909** | **0.8638591** |
+| Random Forest       | **0.3195887** | **0.8645424** |
+
+**Interpretation**
+
+**Accuracy:**
+
+-   The Random Forest again performs slightly better (**0.8645** vs **0.8639**), correctly classifying more observations overall.
+
+-   While the Random Forest predicts fewer individuals as "Diabetes," it improves the overall fit of the probability model and provides more stable predictions.
+
+-   Ensemble methods like random forests reduce variance by averaging many trees, which typically leads to better predictive performance than a single tree.
+
+**Log Loss:**
+
+-   Lower values indicate better-calibrated probability estimates
+
+-   The Random Forest achieves a lower log loss (**0.3196** vs **0.3270**), meaning its predicted probabilities more closely match the true outcomes.
+
+**Conclusion**
+
+Despite being more conservative in its classification decisions, the **Random Forest** produces **better-calibrated probabilities** and **slightly higher accuracy**, making it the overall best-performing model on the test set.
+

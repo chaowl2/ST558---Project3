@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>Diabetes EDA</title>
+<title>ST558 Project 3 – Derek Chao - Diabetes EDA</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -86,25 +86,102 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 </style>
 
 
-<script src="eda_files/libs/clipboard/clipboard.min.js"></script>
-<script src="eda_files/libs/quarto-html/quarto.js"></script>
-<script src="eda_files/libs/quarto-html/popper.min.js"></script>
-<script src="eda_files/libs/quarto-html/tippy.umd.min.js"></script>
-<script src="eda_files/libs/quarto-html/anchor.min.js"></script>
-<link href="eda_files/libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="eda_files/libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
-<script src="eda_files/libs/bootstrap/bootstrap.min.js"></script>
-<link href="eda_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="eda_files/libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
+<script src="site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="site_libs/quarto-nav/headroom.min.js"></script>
+<script src="site_libs/clipboard/clipboard.min.js"></script>
+<script src="site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="site_libs/quarto-search/fuse.min.js"></script>
+<script src="site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="./">
+<script src="site_libs/quarto-html/quarto.js"></script>
+<script src="site_libs/quarto-html/popper.min.js"></script>
+<script src="site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="site_libs/quarto-html/anchor.min.js"></script>
+<link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="site_libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 20,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit"
+  }
+}</script>
 
 
 </head>
 
-<body class="fullcontent">
+<body class="nav-fixed">
 
-<div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
-
-<main class="content" id="quarto-document-content">
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg navbar-dark ">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container">
+    <a class="navbar-brand" href="./index.html">
+    <span class="navbar-title">ST558 Project 3 – Derek Chao</span>
+    </a>
+  </div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll me-auto">
+  <li class="nav-item">
+    <a class="nav-link active" href="./eda.html" aria-current="page">
+ <span class="menu-text">EDA</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="./Modeling.html">
+ <span class="menu-text">Modeling</span></a>
+  </li>  
+</ul>
+              <div id="quarto-search" class="" title="Search"></div>
+          </div> <!-- /navcollapse -->
+      </div> <!-- /container-fluid -->
+    </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-full page-navbar">
+<!-- sidebar -->
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#introduction" id="toc-introduction" class="nav-link active" data-scroll-target="#introduction">Introduction</a></li>
+  <li><a href="#data" id="toc-data" class="nav-link" data-scroll-target="#data">Data</a>
+  <ul class="collapse">
+  <li><a href="#read-data-convert-to-lowercase" id="toc-read-data-convert-to-lowercase" class="nav-link" data-scroll-target="#read-data-convert-to-lowercase">Read data + convert to lowercase</a></li>
+  <li><a href="#convert-some-variables-to-factors-and-give-meaningful-labels" id="toc-convert-some-variables-to-factors-and-give-meaningful-labels" class="nav-link" data-scroll-target="#convert-some-variables-to-factors-and-give-meaningful-labels">Convert some variables to factors and give meaningful labels</a></li>
+  <li><a href="#check-for-missing-values" id="toc-check-for-missing-values" class="nav-link" data-scroll-target="#check-for-missing-values">Check for Missing Values</a></li>
+  <li><a href="#exploring-data-using-visualizations" id="toc-exploring-data-using-visualizations" class="nav-link" data-scroll-target="#exploring-data-using-visualizations">Exploring Data using visualizations</a></li>
+  <li><a href="#categorical-predictors-vs-diabetes" id="toc-categorical-predictors-vs-diabetes" class="nav-link" data-scroll-target="#categorical-predictors-vs-diabetes">Categorical predictors vs Diabetes</a></li>
+  <li><a href="#physical-activity-vs-diabetes" id="toc-physical-activity-vs-diabetes" class="nav-link" data-scroll-target="#physical-activity-vs-diabetes">Physical Activity vs Diabetes</a></li>
+  <li><a href="#education-and-income-vs-diabetes" id="toc-education-and-income-vs-diabetes" class="nav-link" data-scroll-target="#education-and-income-vs-diabetes">Education and Income vs Diabetes</a></li>
+  <li><a href="#checking-other-binary-variables" id="toc-checking-other-binary-variables" class="nav-link" data-scroll-target="#checking-other-binary-variables">Checking other Binary Variables</a></li>
+  <li><a href="#plotting-binary-variables" id="toc-plotting-binary-variables" class="nav-link" data-scroll-target="#plotting-binary-variables">Plotting Binary Variables</a></li>
+  </ul></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content column-page-left" id="quarto-document-content">
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
@@ -346,7 +423,7 @@ dbl (22): Diabetes_binary, HighBP, HighChol, CholCheck, BMI, Smoker, Stroke,...
 <p><img src="eda_files/figure-html/genhlth-vs-diabetes-1.png" class="img-fluid" width="672"></p>
 </div>
 </div>
-<p>Diabetes becomes increasingly common as general health worsens. Individuals reporting "Fair" or "Poor" health show a much higher proportion of diabetes compared to those in excellent or very good health, suggesting that overall health status is strongly related to diabetes risk.</p>
+<p>Diabetes becomes increasingly common as general health worsens. Individuals reporting “Fair” or “Poor” health show a much higher proportion of diabetes compared to those in excellent or very good health, suggesting that overall health status is strongly related to diabetes risk.</p>
 </section>
 <section id="physical-activity-vs-diabetes" class="level3">
 <h3 class="anchored" data-anchor-id="physical-activity-vs-diabetes">Physical Activity vs Diabetes</h3>
@@ -449,7 +526,7 @@ dbl (22): Diabetes_binary, HighBP, HighChol, CholCheck, BMI, Smoker, Stroke,...
 </div>
 </div>
 <p>Several key health risk factors are common in the dataset: about <strong>43%</strong> of respondents report high blood pressure and <strong>42%</strong> report high cholesterol, both of which are strongly linked to diabetes and are likely to be important predictors. Nearly <strong>96%</strong> of individuals have had their cholesterol checked, indicating widespread screening. Smoking is also prevalent at <strong>44%</strong>, which may contribute modestly to diabetes risk.</p>
-<p>Stroke (<strong>4%</strong>) and heart disease or heart attack (<strong>9%</strong>)—are less common but show strong clinical ties to diabetes and could help distinguish higher-risk individuals. Lifestyle behaviors vary across respondents: <strong>63%</strong> regularly eat fruits and <strong>81%</strong> eat vegetables, while heavy alcohol use is relatively rare (<strong>6%</strong>). These indicators collectively provide meaningful information about metabolic health and are likely to contribute to the model's ability to predict diabetes.</p>
+<p>Stroke (<strong>4%</strong>) and heart disease or heart attack (<strong>9%</strong>)—are less common but show strong clinical ties to diabetes and could help distinguish higher-risk individuals. Lifestyle behaviors vary across respondents: <strong>63%</strong> regularly eat fruits and <strong>81%</strong> eat vegetables, while heavy alcohol use is relatively rare (<strong>6%</strong>). These indicators collectively provide meaningful information about metabolic health and are likely to contribute to the model’s ability to predict diabetes.</p>
 </section>
 <section id="plotting-binary-variables" class="level3">
 <h3 class="anchored" data-anchor-id="plotting-binary-variables">Plotting Binary Variables</h3>
@@ -488,11 +565,13 @@ dbl (22): Diabetes_binary, HighBP, HighChol, CholCheck, BMI, Smoker, Stroke,...
 </div>
 </div>
 <p>Across all binary health indicators, individuals with various health risk factors consistently show higher rates of diabetes. Diabetes prevalence is substantially higher among those with <strong>high blood pressure</strong>, <strong>high cholesterol</strong>, a history of <strong>stroke</strong>, or <strong>heart disease/heart attack</strong>, highlighting their strong clinical connection to diabetes. Smoking shows only a slight increase in diabetes prevalence, while dietary indicators (fruit and vegetable consumption) display small differences between groups. Heavy alcohol consumption appears weakly related as well. Overall, the indicators most strongly associated with diabetes are cardiovascular-related conditions, which will likely play an important role in the predictive modeling stage.</p>
+<p>[Click here for the Modeling Page](Modeling.html)</p>
+
+
 </section>
 </section>
 
-</main>
-<!-- /main column -->
+</main> <!-- /main -->
 <script id="quarto-html-after-body" type="application/javascript">
 window.document.addEventListener("DOMContentLoaded", function (event) {
   const toggleBodyColorMode = (bsSheetEl) => {

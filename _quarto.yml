@@ -1,0 +1,18 @@
+project:
+  type: website
+  output-dir: docs   # GitHub Pages reads from docs/
+
+website:
+  title: "ST558 Project 3 – Derek Chao"
+  navbar:
+    left:
+      - text: "EDA"
+        href: eda.html
+      - text: "Modeling"
+        href: Modeling.html
+
+format:
+  html:
+    theme: cosmo
+    toc: true
+    page-layout: full
