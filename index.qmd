@@ -1,0 +1,15 @@
+---
+title: "ST558 Project 3 – Derek Chao"
+format: html
+editor: visual
+---
+
+## Welcome
+
+This website contains all deliverables for **Project 3.**
+
+Use the navigation bar to view:
+
+\- EDA
+
+\- Modeling
