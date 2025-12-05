@@ -1,6 +1,9 @@
 project:
   type: website
-  output-dir: docs   # GitHub Pages reads from docs/
+  output-dir: docs
+  render:
+    - eda.qmd
+    - Modeling.qmd
 
 website:
   title: "ST558 Project 3 – Derek Chao"
